@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Perovskite BFO crystal icon">
+  <rect width="128" height="128" rx="24" fill="#f6f3e8"/>
+  <path d="M32 34 64 18l32 16v40L64 94 32 74Z" fill="none" stroke="#17201c" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M32 34 64 54l32-20M64 54v40M32 74l32-20 32 20" fill="none" stroke="#17201c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+  <g fill="#2d9c8b" stroke="#17201c" stroke-width="3">
+    <circle cx="32" cy="34" r="9"/>
+    <circle cx="96" cy="34" r="9"/>
+    <circle cx="32" cy="74" r="9"/>
+    <circle cx="96" cy="74" r="9"/>
+    <circle cx="64" cy="18" r="8"/>
+    <circle cx="64" cy="94" r="8"/>
+  </g>
+  <g fill="#dfe7ea" stroke="#77858b" stroke-width="3">
+    <circle cx="48" cy="44" r="7"/>
+    <circle cx="80" cy="44" r="7"/>
+    <circle cx="47" cy="73" r="7"/>
+    <circle cx="81" cy="73" r="7"/>
+    <circle cx="64" cy="54" r="7"/>
+  </g>
+  <circle cx="69" cy="60" r="12" fill="#b44834" stroke="#17201c" stroke-width="4"/>
+  <path d="M72 57 92 37" fill="none" stroke="#274060" stroke-width="6" stroke-linecap="round"/>
+  <path d="M92 37 89 52M92 37 77 40" fill="none" stroke="#274060" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25 100h78" stroke="#d29d36" stroke-width="7" stroke-linecap="round"/>
+</svg>

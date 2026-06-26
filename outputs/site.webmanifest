@@ -1,0 +1,14 @@
+{
+  "name": "Perovskite and BFO Visualizer",
+  "short_name": "BFO Visualizer",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#f6f3e8",
+  "background_color": "#f6f3e8",
+  "display": "standalone"
+}
