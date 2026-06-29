@@ -61,6 +61,8 @@
       flex-direction: column;
       gap: 18px;
       min-height: 100vh;
+      max-height: 100vh;
+      overflow-y: auto;
     }
 
     .title-block {
@@ -159,7 +161,8 @@
     }
 
     .controls,
-    .reading {
+    .reading,
+    .structure-notes {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--panel);
@@ -170,6 +173,38 @@
     .controls {
       display: grid;
       gap: 14px;
+    }
+
+    .view-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--paper-2);
+    }
+
+    .view-button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .view-button[aria-pressed="true"] {
+      background: #fffaf0;
+      color: var(--ink);
+      box-shadow: 0 1px 5px rgba(42, 35, 22, 0.14);
+    }
+
+    .view-button:focus-visible {
+      outline: 3px solid rgba(45, 156, 139, 0.35);
+      outline-offset: 2px;
     }
 
     .control {
@@ -252,6 +287,65 @@
       gap: 12px;
     }
 
+    .structure-notes {
+      display: grid;
+      gap: 12px;
+    }
+
+    .structure-notes h2 {
+      margin: 0;
+      font: 700 15px Georgia, "Times New Roman", serif;
+    }
+
+    .fact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .fact {
+      min-height: 58px;
+      padding: 9px 10px;
+      background: #fffaf0;
+    }
+
+    .fact span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .fact strong {
+      display: block;
+      margin-top: 3px;
+      font: 700 13px "Cascadia Mono", Consolas, monospace;
+      line-height: 1.3;
+    }
+
+    .notice-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .notice-list li {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 7px;
+    }
+
+    .notice-list b {
+      color: var(--fe);
+    }
+
     .reading h2 {
       margin: 0;
       font-size: 18px;
@@ -325,6 +419,8 @@
         radial-gradient(circle at 52% 44%, rgba(255, 250, 240, 0.55), transparent 42%),
         var(--paper-2);
       overflow: hidden;
+      position: sticky;
+      top: 0;
     }
 
     #scene {
@@ -360,6 +456,10 @@
       border-radius: 8px;
       padding: 10px 12px;
       min-width: 128px;
+    }
+
+    .metric.cell-count strong {
+      color: var(--fe);
     }
 
     .metric span {
@@ -433,10 +533,13 @@
         border-right: 0;
         border-bottom: 1px solid var(--line);
         padding: 20px;
+        max-height: none;
+        overflow: visible;
       }
 
       .stage {
         min-height: 620px;
+        position: relative;
       }
 
       .hud {
@@ -488,9 +591,9 @@
         <p class="kicker">Section 1.6 visual companion</p>
         <h1>Perovskite to BFO</h1>
         <p class="summary">
-          Rotate the unit cell and turn each distortion on. The model exaggerates BFO's small
-          geometric changes so the A-site cage, FeO6 octahedron, octahedral tilt, and [111]
-          polar displacement become visible.
+          Rotate eight connected pseudocubic cells and turn each distortion on. The model exaggerates
+          BFO's small geometric changes so corner sharing, alternating FeO6 rotations, and the collective
+          [111] polar displacement become visible.
         </p>
       </section>
 
@@ -535,6 +638,16 @@
       <section class="controls" aria-label="Visualization controls">
         <div class="control">
           <div class="control-row">
+            <strong>Crystal extent</strong>
+            <span>compare periodicity</span>
+          </div>
+          <div class="view-switch" role="group" aria-label="Crystal extent">
+            <button class="view-button" data-view="supercell" aria-pressed="true">2 x 2 x 2 (8 cells)</button>
+            <button class="view-button" data-view="single" aria-pressed="false">1 cell</button>
+          </div>
+        </div>
+        <div class="control">
+          <div class="control-row">
             <strong>Distortion strength</strong>
             <span id="strengthValue">1.0x</span>
           </div>
@@ -558,9 +671,24 @@
         </div>
 
         <div class="switches">
-          <button class="small-button" id="toggleOcta" data-on="true">FeO6 octahedron</button>
+          <button class="small-button" id="toggleOcta" data-on="true">FeO6 network</button>
           <button class="small-button" id="toggleLabels" data-on="true">Site labels</button>
         </div>
+      </section>
+
+      <section class="structure-notes" aria-label="BFO structure details">
+        <h2>Structure notes</h2>
+        <div class="fact-grid">
+          <div class="fact"><span>A-site cage</span><strong>12 O neighbours</strong></div>
+          <div class="fact"><span>B-site cage</span><strong>6 O neighbours</strong></div>
+          <div class="fact"><span>Hexagonal cell</span><strong>5.578 x 13.868 A</strong></div>
+          <div class="fact"><span>Bi displacement</span><strong>about 0.6 A</strong></div>
+        </div>
+        <ul class="notice-list" id="noticeList">
+          <li><b>1</b><span>Each oxygen vertex is shared by neighbouring FeO6 octahedra.</span></li>
+          <li><b>2</b><span>Adjacent octahedra rotate in opposite senses: the antiphase a^-a^-a^- pattern.</span></li>
+          <li><b>3</b><span>Bi and Fe shift together along pseudocubic [111], relative to oxygen.</span></li>
+        </ul>
       </section>
 
       <section class="reading" aria-live="polite">
@@ -584,6 +712,7 @@
       <div class="hud">
         <div class="metric-strip">
           <div class="metric"><span>Space group</span><strong id="spaceGroup">Pm3m</strong></div>
+          <div class="metric cell-count"><span>Visible cells</span><strong id="cellCount">8 / 2 x 2 x 2</strong></div>
           <div class="metric"><span>a_pc</span><strong id="apc">3.965 A</strong></div>
           <div class="metric"><span>Angle</span><strong id="angle">90.0 deg</strong></div>
           <div class="metric"><span>Polarity</span><strong id="polarity">centrosym.</strong></div>
@@ -617,276 +746,439 @@
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    camera.position.set(5.2, 4.6, 6.3);
-
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.minDistance = 3.4;
-    controls.maxDistance = 11;
+    controls.minDistance = 3;
+    controls.maxDistance = 15;
     controls.target.set(0, 0, 0);
 
-    scene.add(new THREE.HemisphereLight(0xfff6df, 0x506070, 2.4));
-    const key = new THREE.DirectionalLight(0xffffff, 2.6);
-    key.position.set(4, 7, 5);
-    scene.add(key);
-    const fill = new THREE.DirectionalLight(0xf7c5a0, 1.1);
-    fill.position.set(-5, 2, -3);
-    scene.add(fill);
+    scene.add(new THREE.HemisphereLight(0xfff6df, 0x506070, 2.3));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    keyLight.position.set(5, 8, 6);
+    scene.add(keyLight);
+    const fillLight = new THREE.DirectionalLight(0xf7c5a0, 1.2);
+    fillLight.position.set(-6, 2, -4);
+    scene.add(fillLight);
 
     const root = new THREE.Group();
-    const atomGroup = new THREE.Group();
-    const labelGroup = new THREE.Group();
-    const lineGroup = new THREE.Group();
+    const cageGroup = new THREE.Group();
     const octaGroup = new THREE.Group();
-    const toleranceGroup = new THREE.Group();
+    const bondGroup = new THREE.Group();
+    const atomGroup = new THREE.Group();
     const arrowGroup = new THREE.Group();
-    root.add(lineGroup, octaGroup, toleranceGroup, atomGroup, arrowGroup, labelGroup);
+    const toleranceGroup = new THREE.Group();
+    const labelGroup = new THREE.Group();
+    root.add(cageGroup, octaGroup, bondGroup, toleranceGroup, atomGroup, arrowGroup, labelGroup);
     scene.add(root);
 
     const materials = {
-      bi: new THREE.MeshStandardMaterial({ color: 0x2d9c8b, roughness: 0.48, metalness: 0.15 }),
-      fe: new THREE.MeshStandardMaterial({ color: 0xb44834, roughness: 0.5, metalness: 0.1 }),
-      o: new THREE.MeshStandardMaterial({ color: 0xdfe7ea, roughness: 0.42, metalness: 0.05 }),
-      cage: new THREE.LineBasicMaterial({ color: 0x17201c, transparent: true, opacity: 0.34 }),
-      octa: new THREE.MeshStandardMaterial({
-        color: 0xd29d36,
-        transparent: true,
-        opacity: 0.23,
-        roughness: 0.64,
-        side: THREE.DoubleSide
-      }),
-      octaLine: new THREE.LineBasicMaterial({ color: 0x9d7220, transparent: true, opacity: 0.58 }),
-      polar: new THREE.LineBasicMaterial({ color: 0x274060, linewidth: 2 }),
-      toleranceGood: new THREE.MeshStandardMaterial({ color: 0x2d9c8b, transparent: true, opacity: 0.16 }),
-      toleranceBad: new THREE.MeshStandardMaterial({ color: 0xb44834, transparent: true, opacity: 0.16 })
+      bi: new THREE.MeshStandardMaterial({ color: 0x2d9c8b, roughness: 0.46, metalness: 0.12 }),
+      fe: new THREE.MeshStandardMaterial({ color: 0xb44834, roughness: 0.48, metalness: 0.08 }),
+      o: new THREE.MeshStandardMaterial({ color: 0xdfe7ea, roughness: 0.38, metalness: 0.03 }),
+      cage: new THREE.LineBasicMaterial({ color: 0x17201c, transparent: true, opacity: 0.24 }),
+      bond: new THREE.MeshStandardMaterial({ color: 0x77858b, roughness: 0.62 }),
+      octaNeutral: new THREE.MeshStandardMaterial({ color: 0xd29d36, transparent: true, opacity: 0.19, roughness: 0.62, side: THREE.DoubleSide }),
+      octaPlus: new THREE.MeshStandardMaterial({ color: 0xd29d36, transparent: true, opacity: 0.29, roughness: 0.62, side: THREE.DoubleSide }),
+      octaMinus: new THREE.MeshStandardMaterial({ color: 0x2d9c8b, transparent: true, opacity: 0.25, roughness: 0.62, side: THREE.DoubleSide }),
+      octaLinePlus: new THREE.LineBasicMaterial({ color: 0x9d7220, transparent: true, opacity: 0.68 }),
+      octaLineMinus: new THREE.LineBasicMaterial({ color: 0x247c70, transparent: true, opacity: 0.66 }),
+      toleranceGood: new THREE.MeshStandardMaterial({ color: 0x2d9c8b, transparent: true, opacity: 0.12 }),
+      toleranceBad: new THREE.MeshStandardMaterial({ color: 0xb44834, transparent: true, opacity: 0.13 })
     };
 
-    const sphere = new THREE.SphereGeometry(1, 40, 24);
-    const smallSphere = new THREE.SphereGeometry(1, 32, 18);
-    const labelCanvasCache = new Map();
-    const atoms = [];
-    const labelSprites = [];
-    const bonds = [];
-    const cubeSize = 2.7;
-    const half = cubeSize / 2;
+    const sphere = new THREE.SphereGeometry(1, 28, 18);
+    const smallSphere = new THREE.SphereGeometry(1, 24, 16);
+    const bondGeometry = new THREE.CylinderGeometry(0.012, 0.012, 1, 10);
     const diag = new THREE.Vector3(1, 1, 1).normalize();
-
-    const corners = [
-      [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
-      [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]
-    ].map(([x, y, z]) => new THREE.Vector3(x * half, y * half, z * half));
-
-    const oxygenBase = [
-      new THREE.Vector3(half, 0, 0),
-      new THREE.Vector3(-half, 0, 0),
-      new THREE.Vector3(0, half, 0),
-      new THREE.Vector3(0, -half, 0),
-      new THREE.Vector3(0, 0, half),
-      new THREE.Vector3(0, 0, -half)
+    const cellSize = 2.05;
+    const half = cellSize / 2;
+    const localOxygens = [
+      new THREE.Vector3(half, 0, 0), new THREE.Vector3(-half, 0, 0),
+      new THREE.Vector3(0, half, 0), new THREE.Vector3(0, -half, 0),
+      new THREE.Vector3(0, 0, half), new THREE.Vector3(0, 0, -half)
     ];
-
-    const oxygenPairs = [
+    const octaFaces = [
       [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
       [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
     ];
-
-    const cubeEdges = [
-      [0, 1], [0, 2], [1, 3], [2, 3],
-      [4, 5], [4, 6], [5, 7], [6, 7],
-      [0, 4], [1, 5], [2, 6], [3, 7]
+    const octaEdges = [
+      [0, 2], [0, 3], [0, 4], [0, 5], [1, 2], [1, 3],
+      [1, 4], [1, 5], [2, 4], [4, 3], [3, 5], [5, 2]
     ];
-
-    function makeAtom(kind, radius, position) {
-      const mesh = new THREE.Mesh(kind === "o" ? smallSphere : sphere, materials[kind]);
-      mesh.scale.setScalar(radius);
-      mesh.position.copy(position);
-      mesh.userData.kind = kind;
-      atomGroup.add(mesh);
-      atoms.push(mesh);
-      return mesh;
-    }
-
-    function makeLabel(text, position) {
-      const sprite = new THREE.Sprite(makeLabelMaterial(text));
-      sprite.position.copy(position);
-      sprite.scale.set(0.48, 0.18, 1);
-      labelGroup.add(sprite);
-      labelSprites.push(sprite);
-      return sprite;
-    }
-
-    function makeLabelMaterial(text) {
-      if (labelCanvasCache.has(text)) return labelCanvasCache.get(text);
-      const c = document.createElement("canvas");
-      c.width = 300;
-      c.height = 112;
-      const ctx = c.getContext("2d");
-      ctx.fillStyle = "rgba(255, 252, 242, 0.92)";
-      roundRect(ctx, 8, 12, 284, 78, 12);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(23, 32, 28, 0.22)";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.fillStyle = "#17201c";
-      ctx.font = "700 42px Segoe UI, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(text, 150, 52);
-      const texture = new THREE.CanvasTexture(c);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
-      labelCanvasCache.set(text, material);
-      return material;
-    }
-
-    function roundRect(ctx, x, y, width, height, radius) {
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.arcTo(x + width, y, x + width, y + height, radius);
-      ctx.arcTo(x + width, y + height, x, y + height, radius);
-      ctx.arcTo(x, y + height, x, y, radius);
-      ctx.arcTo(x, y, x + width, y, radius);
-      ctx.closePath();
-    }
-
-    const biAtoms = corners.map((p) => makeAtom("bi", 0.19, p));
-    const oxygenAtoms = oxygenBase.map((p) => makeAtom("o", 0.135, p));
-    const feAtom = makeAtom("fe", 0.22, new THREE.Vector3(0, 0, 0));
-
-    corners.forEach((p, index) => {
-      if (index === 7 || index === 0) makeLabel(index === 7 ? "Bi A-site" : "corner A", p.clone().multiplyScalar(1.15));
-    });
-    makeLabel("Fe B-site", new THREE.Vector3(0.35, 0.34, 0.16));
-    makeLabel("O face", new THREE.Vector3(0, -half - 0.35, 0));
-
-    function makeLine(points, material = materials.cage) {
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const line = new THREE.Line(geometry, material);
-      lineGroup.add(line);
-      return line;
-    }
-
-    const cubeLines = cubeEdges.map(([a, b]) => makeLine([corners[a], corners[b]]));
-
-    function makeBond() {
-      const geometry = new THREE.CylinderGeometry(0.018, 0.018, 1, 14);
-      const material = new THREE.MeshStandardMaterial({ color: 0x77858b, roughness: 0.6 });
-      const mesh = new THREE.Mesh(geometry, material);
-      lineGroup.add(mesh);
-      bonds.push(mesh);
-      return mesh;
-    }
-
-    for (let i = 0; i < 6; i += 1) makeBond();
-
-    const octaGeometry = new THREE.BufferGeometry();
-    const octaMesh = new THREE.Mesh(octaGeometry, materials.octa);
-    octaGroup.add(octaMesh);
-    const octaEdgeLines = Array.from({ length: 12 }, () => {
-      const line = new THREE.Line(new THREE.BufferGeometry(), materials.octaLine);
-      octaGroup.add(line);
-      return line;
-    });
-
-    const polarArrow = new THREE.ArrowHelper(diag, diag.clone().multiplyScalar(-1.95), 3.9, 0x274060, 0.24, 0.16);
-    arrowGroup.add(polarArrow);
-    const displacementArrow = new THREE.ArrowHelper(diag, new THREE.Vector3(0, 0, 0), 0.95, 0xb44834, 0.19, 0.12);
-    arrowGroup.add(displacementArrow);
-
-    const toleranceRing = new THREE.Mesh(
-      new THREE.SphereGeometry(half * 1.02, 48, 24),
-      materials.toleranceGood
-    );
-    toleranceRing.scale.set(1, 1, 1);
-    toleranceGroup.add(toleranceRing);
+    const cornerOffsets = [
+      [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
+      [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]
+    ];
+    const cubeEdges = [
+      [0, 1], [0, 2], [1, 3], [2, 3], [4, 5], [4, 6],
+      [5, 7], [6, 7], [0, 4], [1, 5], [2, 6], [3, 7]
+    ];
 
     const state = {
       mode: "ideal",
+      view: "supercell",
       strength: 1,
       tolerance: 0.96,
       showOcta: true,
       showLabels: true
     };
+    let model = null;
+    let polarArrow = null;
+    let displacementArrow = null;
+    let toleranceCage = null;
 
     const copy = {
       ideal: {
         title: "Ideal cubic parent, Pm3m",
-        body: "This is the parent perovskite: large A cations occupy the cube corners, the smaller B cation sits in the body centre, and oxygen atoms sit at face centres to form a BO6 octahedron.",
-        calloutTitle: "Start with the cube.",
-        callout: "Every opposite direction is balanced. The B cation is centred inside the oxygen octahedron, so there is no built-in dipole.",
-        group: "Pm3m",
-        angle: "90.0 deg",
-        polarity: "centrosym."
+        body: "In each ABO3 cell, A occupies the cube vertices, B occupies the body centre, and O occupies the face centres. Across the supercell, every oxygen is a shared vertex joining two neighbouring BO6 octahedra.",
+        calloutTitle: "Read the repeating network.",
+        callout: "Eight cells reveal that the octahedra are not isolated objects. They form a continuous three-dimensional corner-sharing framework.",
+        group: "Pm3m", angle: "90.0 deg", polarity: "centrosym.",
+        notices: ["A is 12-coordinate inside a cuboctahedral oxygen cage.", "B is 6-coordinate at the centre of an oxygen octahedron.", "The cubic parent is the reference for every lower-symmetry distortion."]
       },
       bshift: {
         title: "B-site off-centre displacement",
-        body: "Move the B cation away from the centre and the BO6 octahedron gains a local dipole. This is the classic ferroelectric route in BaTiO3 and PbTiO3.",
-        calloutTitle: "A dipole from the centre.",
-        callout: "The central B ion is no longer equally surrounded by all six oxygens. The red arrow marks the new local polarization direction.",
-        group: "polar variant",
-        angle: "90.0 deg",
-        polarity: "B-site"
+        body: "All B cations move relative to their six surrounding oxygens, producing aligned local dipoles. This is the familiar ferroelectric route in titanates such as BaTiO3 and PbTiO3, not the dominant origin in BFO.",
+        calloutTitle: "A collective B-site dipole.",
+        callout: "The red Fe/B spheres shift along [111] while the oxygen framework remains centred. Repetition turns one local dipole into a polar crystal.",
+        group: "polar variant", angle: "90.0 deg", polarity: "B-site",
+        notices: ["The B-O distances become unequal when B leaves the centre.", "Parallel local dipoles add to a macroscopic polarization.", "BFO instead relies strongly on the stereochemically active Bi 6s2 lone pair."]
       },
       tilt: {
-        title: "Cooperative BO6 octahedral tilt",
-        body: "Rotating the octahedra helps a too-small A cation fit its cage. Tilting lowers symmetry, but by itself it does not necessarily make the crystal polar.",
-        calloutTitle: "Tilt solves a packing problem.",
-        callout: "The oxygen octahedron rotates while the B cation remains near the middle. This is why tilt changes shape before it creates a polar axis.",
-        group: "tilted",
-        angle: "86 to 90 deg",
-        polarity: "non-polar"
+        title: "Cooperative antiphase BO6 tilt",
+        body: "Neighbouring octahedra rotate in opposite senses about [111]. Shared oxygens force the motion to be cooperative: turning one octahedron necessarily moves the vertices of the next.",
+        calloutTitle: "Gold and teal rotate oppositely.",
+        callout: "The alternating colors mark the two antiphase rotation senses. Tilting lowers symmetry and improves A-site packing, but does not create polarity by itself.",
+        group: "tilted", angle: "86 to 90 deg", polarity: "non-polar",
+        notices: ["Adjacent rotation signs alternate through all three directions.", "The pattern is written a^-a^-a^- in Glazer notation for R3c BFO.", "Corner sharing is retained even though individual octahedra become slightly distorted."]
       },
       bfo: {
         title: "BFO rhombohedral R3c",
-        body: "BFO combines antiphase FeO6 rotation with Bi and Fe displacement along pseudocubic [111]. The Bi 6s2 lone pair drives the large A-site shift.",
-        calloutTitle: "Two distortions act together.",
-        callout: "The cage shears into a rhombohedral shape, the octahedron rotates, and Bi/Fe shift along [111]. That combined loss of inversion gives spontaneous polarization.",
-        group: "R3c",
-        angle: "89.4 deg",
-        polarity: "[111]"
+        body: "BFO combines an antiphase a^-a^-a^- FeO6 rotation with relative Bi and Fe displacement along pseudocubic [111]. The stereochemically active Bi 6s2 lone pair drives the unusually large A-site contribution.",
+        calloutTitle: "Two distortions, one [111] axis.",
+        callout: "Alternating octahedral rotations and a uniform polar shift coexist. The sheared cell reaches the rhombohedral R3c ground state and loses inversion symmetry.",
+        group: "R3c", angle: "89.4 deg", polarity: "[111]",
+        notices: ["Bi displacement is about 0.6 A along [111].", "a_hex is about 5.578 A and c_hex about 13.868 A.", "a_pc is about 3.965 A; the rhombohedral angle is about 89.4 degrees."]
       },
       tolerance: {
         title: "Goldschmidt tolerance factor",
-        body: "t near 1 favours cubic packing. t below 1 means the A cation is too small for the cuboctahedral cage, so octahedral tilting becomes favourable. BFO sits near t = 0.96.",
-        calloutTitle: "BFO is slightly undersized.",
-        callout: "Lower t values shrink the A-site fit and increase the displayed tilt. Around 0.96, the model shows the moderate rhombohedral relaxation expected for BFO.",
-        group: "packing",
-        angle: "t-linked",
-        polarity: "depends"
+        body: "The factor t measures A-site fit. Near 1 the cubic cage is comfortable; below 1 the A cation is undersized and cooperative octahedral tilting becomes favourable. BFO lies near t = 0.96.",
+        calloutTitle: "Packing controls the tilt.",
+        callout: "Move t below unity and the network increases its alternating rotations. Values above unity can favour hexagonal stacking or non-perovskite structures.",
+        group: "packing", angle: "t-linked", polarity: "depends",
+        notices: ["t = (rA + rO) / [sqrt(2)(rB + rO)].", "t below 1 usually signals an undersized A-site cation.", "BFO's t near 0.96 is consistent with moderate rhombohedral tilting."]
       }
     };
 
-    const modeButtons = Array.from(document.querySelectorAll(".mode-button"));
+    function clearGroup(group) {
+      while (group.children.length) group.remove(group.children[0]);
+    }
+
+    function makeAtom(kind, radius, base) {
+      const mesh = new THREE.Mesh(kind === "o" ? smallSphere : sphere, materials[kind]);
+      mesh.scale.setScalar(radius);
+      mesh.position.copy(base);
+      mesh.userData.base = base.clone();
+      atomGroup.add(mesh);
+      return mesh;
+    }
+
+    function pointKey(point) {
+      return [point.x, point.y, point.z].map((value) => value.toFixed(4)).join("|");
+    }
+
+    function edgeKey(a, b) {
+      return [pointKey(a), pointKey(b)].sort().join("::");
+    }
+
+    function makeLine(group, a, b, material) {
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), material);
+      group.add(line);
+      return line;
+    }
+
+    function makeLabel(text, target, offset) {
+      const canvasLabel = document.createElement("canvas");
+      canvasLabel.width = 600;
+      canvasLabel.height = 112;
+      const context = canvasLabel.getContext("2d");
+      context.fillStyle = "rgba(255, 252, 242, 0.94)";
+      roundRect(context, 8, 12, 584, 78, 12);
+      context.fill();
+      context.strokeStyle = "rgba(23, 32, 28, 0.24)";
+      context.lineWidth = 3;
+      context.stroke();
+      context.fillStyle = "#17201c";
+      context.font = "700 34px Segoe UI, sans-serif";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(text, 300, 52);
+      const texture = new THREE.CanvasTexture(canvasLabel);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        sizeAttenuation: false
+      }));
+      const labelWidth = canvas.parentElement.getBoundingClientRect().width < 560 ? 0.16 : 0.22;
+      sprite.scale.set(labelWidth, labelWidth * 0.186, 1);
+      sprite.renderOrder = 999;
+      sprite.userData.target = target;
+      sprite.userData.offset = offset;
+      labelGroup.add(sprite);
+      return sprite;
+    }
+
+    function roundRect(context, x, y, width, height, radius) {
+      context.beginPath();
+      context.moveTo(x + radius, y);
+      context.arcTo(x + width, y, x + width, y + height, radius);
+      context.arcTo(x + width, y + height, x, y + height, radius);
+      context.arcTo(x, y + height, x, y, radius);
+      context.arcTo(x, y, x + width, y, radius);
+      context.closePath();
+    }
+
+    function buildModel() {
+      [cageGroup, octaGroup, bondGroup, atomGroup, arrowGroup, toleranceGroup, labelGroup].forEach(clearGroup);
+      const n = state.view === "supercell" ? 2 : 1;
+      const extent = n * cellSize / 2;
+      const cells = [];
+      const oxygens = new Map();
+      const aAtoms = [];
+      const cageLines = [];
+      const seenEdges = new Set();
+
+      for (let x = 0; x <= n; x += 1) {
+        for (let y = 0; y <= n; y += 1) {
+          for (let z = 0; z <= n; z += 1) {
+            const base = new THREE.Vector3(-extent + x * cellSize, -extent + y * cellSize, -extent + z * cellSize);
+            aAtoms.push({ mesh: makeAtom("bi", 0.145, base), base });
+          }
+        }
+      }
+
+      for (let i = 0; i < n; i += 1) {
+        for (let j = 0; j < n; j += 1) {
+          for (let k = 0; k < n; k += 1) {
+            const center = new THREE.Vector3(-extent + (i + 0.5) * cellSize, -extent + (j + 0.5) * cellSize, -extent + (k + 0.5) * cellSize);
+            const parity = (i + j + k) % 2 === 0 ? 1 : -1;
+            const cell = { i, j, k, center, parity, oxygenKeys: [], bonds: [], edgeLines: [] };
+            cell.fe = { mesh: makeAtom("fe", 0.165, center), base: center };
+
+            localOxygens.forEach((local) => {
+              const base = center.clone().add(local);
+              const key = pointKey(base);
+              if (!oxygens.has(key)) oxygens.set(key, { base, memberships: [] });
+              oxygens.get(key).memberships.push({ cell, local: local.clone() });
+              cell.oxygenKeys.push(key);
+            });
+
+            const corners = cornerOffsets.map(([x, y, z]) => center.clone().add(new THREE.Vector3(x * half, y * half, z * half)));
+            cubeEdges.forEach(([a, b]) => {
+              const key = edgeKey(corners[a], corners[b]);
+              if (seenEdges.has(key)) return;
+              seenEdges.add(key);
+              cageLines.push({ line: makeLine(cageGroup, corners[a], corners[b], materials.cage), a: corners[a], b: corners[b] });
+            });
+
+            cell.octaGeometry = new THREE.BufferGeometry();
+            cell.octaMesh = new THREE.Mesh(cell.octaGeometry, materials.octaNeutral);
+            octaGroup.add(cell.octaMesh);
+            for (let edge = 0; edge < 12; edge += 1) {
+              cell.edgeLines.push(makeLine(octaGroup, center, center, parity > 0 ? materials.octaLinePlus : materials.octaLineMinus));
+            }
+            for (let bond = 0; bond < 6; bond += 1) {
+              const mesh = new THREE.Mesh(bondGeometry, materials.bond);
+              bondGroup.add(mesh);
+              cell.bonds.push(mesh);
+            }
+            cells.push(cell);
+          }
+        }
+      }
+
+      oxygens.forEach((oxygen) => {
+        oxygen.mesh = makeAtom("o", 0.105, oxygen.base);
+        oxygen.position = oxygen.base.clone();
+      });
+
+      polarArrow = new THREE.ArrowHelper(diag, diag.clone().multiplyScalar(-extent * 0.92), extent * 1.84, 0x274060, 0.23, 0.15);
+      arrowGroup.add(polarArrow);
+      displacementArrow = new THREE.ArrowHelper(diag, new THREE.Vector3(), n === 2 ? 0.74 : 0.6, 0xb44834, 0.17, 0.11);
+      arrowGroup.add(displacementArrow);
+      toleranceCage = new THREE.Mesh(new THREE.SphereGeometry(cellSize * 0.72, 36, 20), materials.toleranceBad);
+      toleranceGroup.add(toleranceCage);
+
+      const labelA = aAtoms.reduce((best, atom) => atom.base.x + atom.base.y + atom.base.z > best.base.x + best.base.y + best.base.z ? atom : best, aAtoms[0]);
+      const labelFe = cells[0].fe;
+      const sharedOxygens = Array.from(oxygens.values()).filter((oxygen) => oxygen.memberships.length > 1);
+      const labelO = sharedOxygens.reduce((best, oxygen) => oxygen.base.length() < best.base.length() ? oxygen : best, sharedOxygens[0] || Array.from(oxygens.values())[0]);
+      makeLabel("Bi / A: 12-coordinate", labelA.mesh, new THREE.Vector3(0.1, 0.38, 0.08));
+      makeLabel("Fe / B: 6-coordinate", labelFe.mesh, new THREE.Vector3(-0.36, -0.34, 0.08));
+      makeLabel("shared oxygen vertex", labelO.mesh, new THREE.Vector3(0.42, -0.42, 0));
+
+      model = { n, extent, cells, oxygens, aAtoms, cageLines, labelA, labelFe, labelO };
+      window.__perovskiteModelStats = {
+        cells: cells.length,
+        aSites: aAtoms.length,
+        bSites: cells.length,
+        oxygenSites: oxygens.size,
+        octahedra: cells.length
+      };
+      camera.position.set(extent * 2.35, extent * 1.9, extent * 2.65);
+      controls.minDistance = n === 2 ? 4.5 : 3;
+      controls.maxDistance = n === 2 ? 15 : 10;
+      controls.update();
+    }
+
+    function tiltDegrees() {
+      if (state.mode === "tilt") return 14 * state.strength;
+      if (state.mode === "bfo") return 11 * state.strength;
+      if (state.mode === "tolerance") return THREE.MathUtils.clamp((1 - state.tolerance) * 150, 0, 17);
+      return 0;
+    }
+
+    function shearPoint(point) {
+      const factor = state.mode === "bfo"
+        ? 0.075 * state.strength
+        : state.mode === "tolerance"
+          ? THREE.MathUtils.clamp((1 - state.tolerance) * 0.72, 0, 0.1)
+          : 0;
+      return new THREE.Vector3(
+        point.x + factor * (point.y + point.z) * 0.5,
+        point.y + factor * (point.x + point.z) * 0.5,
+        point.z + factor * (point.x + point.y) * 0.5
+      );
+    }
+
+    function positionBond(mesh, start, end) {
+      const direction = end.clone().sub(start);
+      mesh.position.copy(start).add(end).multiplyScalar(0.5);
+      mesh.scale.set(1, direction.length(), 1);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+    }
+
+    function updateOctahedron(cell, points, alternating) {
+      const vertices = [];
+      octaFaces.forEach(([a, b, c]) => vertices.push(...points[a].toArray(), ...points[b].toArray(), ...points[c].toArray()));
+      cell.octaGeometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+      cell.octaGeometry.computeVertexNormals();
+      cell.octaMesh.material = alternating
+        ? (cell.parity > 0 ? materials.octaPlus : materials.octaMinus)
+        : materials.octaNeutral;
+      octaEdges.forEach(([a, b], index) => {
+        const line = cell.edgeLines[index];
+        line.geometry.dispose();
+        line.geometry = new THREE.BufferGeometry().setFromPoints([points[a], points[b]]);
+        line.material = alternating && cell.parity < 0 ? materials.octaLineMinus : materials.octaLinePlus;
+      });
+    }
+
+    function updateScene() {
+      const active = copy[state.mode];
+      const angleNow = THREE.MathUtils.degToRad(tiltDegrees());
+      const alternating = angleNow > 0.0001;
+      const biShift = state.mode === "bfo" ? diag.clone().multiplyScalar(0.18 * state.strength) : new THREE.Vector3();
+      const feShift = state.mode === "bshift"
+        ? diag.clone().multiplyScalar(0.32 * state.strength)
+        : state.mode === "bfo"
+          ? diag.clone().multiplyScalar(0.105 * state.strength)
+          : new THREE.Vector3();
+
+      model.aAtoms.forEach((atom) => {
+        atom.mesh.position.copy(shearPoint(atom.base)).add(biShift);
+        const radius = state.mode === "tolerance" ? THREE.MathUtils.mapLinear(state.tolerance, 0.88, 1.08, 0.11, 0.19) : 0.145;
+        atom.mesh.scale.setScalar(radius);
+      });
+      model.cells.forEach((cell) => cell.fe.mesh.position.copy(shearPoint(cell.center)).add(feShift));
+
+      model.oxygens.forEach((oxygen) => {
+        const shared = new THREE.Vector3();
+        oxygen.memberships.forEach(({ cell, local }) => {
+          const rotation = new THREE.Quaternion().setFromAxisAngle(diag, angleNow * cell.parity);
+          shared.add(cell.center.clone().add(local.clone().applyQuaternion(rotation)));
+        });
+        shared.multiplyScalar(1 / oxygen.memberships.length);
+        oxygen.position.copy(shearPoint(shared));
+        oxygen.mesh.position.copy(oxygen.position);
+      });
+
+      model.cageLines.forEach((record) => {
+        record.line.geometry.dispose();
+        record.line.geometry = new THREE.BufferGeometry().setFromPoints([shearPoint(record.a), shearPoint(record.b)]);
+      });
+      model.cells.forEach((cell) => {
+        const points = cell.oxygenKeys.map((key) => model.oxygens.get(key).position);
+        points.forEach((point, index) => positionBond(cell.bonds[index], cell.fe.mesh.position, point));
+        updateOctahedron(cell, points, alternating);
+      });
+
+      labelGroup.children.forEach((label) => label.position.copy(label.userData.target.position).add(label.userData.offset));
+      const referenceFe = model.labelFe.mesh.position;
+      displacementArrow.position.copy(referenceFe).add(diag.clone().multiplyScalar(-0.42));
+      octaGroup.visible = state.showOcta;
+      labelGroup.visible = state.showLabels;
+      toleranceGroup.visible = state.mode === "tolerance";
+      arrowGroup.visible = state.mode !== "ideal";
+      displacementArrow.visible = state.mode === "bshift" || state.mode === "bfo";
+      polarArrow.setColor(new THREE.Color(state.mode === "tilt" || state.mode === "tolerance" ? 0x888277 : 0x274060));
+
+      if (state.mode === "tolerance") {
+        const good = Math.abs(state.tolerance - 1) < 0.035;
+        toleranceCage.material = good ? materials.toleranceGood : materials.toleranceBad;
+        const scale = THREE.MathUtils.mapLinear(state.tolerance, 0.88, 1.08, 0.75, 1.08);
+        toleranceCage.scale.setScalar(scale);
+        toleranceCage.position.copy(model.labelA.mesh.position);
+      }
+
+      document.querySelector("#strengthValue").textContent = `${state.strength.toFixed(1)}x`;
+      document.querySelector("#tValue").textContent = state.tolerance.toFixed(2);
+      document.querySelector("#readingTitle").textContent = active.title;
+      document.querySelector("#readingBody").textContent = active.body;
+      document.querySelector("#callout").innerHTML = `<strong>${active.calloutTitle}</strong>${active.callout}`;
+      document.querySelector("#spaceGroup").textContent = active.group;
+      document.querySelector("#cellCount").textContent = model.n === 2 ? "8 / 2 x 2 x 2" : "1 / unit cell";
+      document.querySelector("#angle").textContent = state.mode === "tolerance"
+        ? `${(90 - THREE.MathUtils.clamp((1 - state.tolerance) * 22, 0, 5)).toFixed(1)} deg`
+        : active.angle;
+      document.querySelector("#polarity").textContent = active.polarity;
+      document.querySelector("#noticeList").innerHTML = active.notices.map((notice, index) => `<li><b>${index + 1}</b><span>${notice}</span></li>`).join("");
+      document.querySelector("#axisLabel").innerHTML = state.mode === "tolerance"
+        ? `<b>t = ${state.tolerance.toFixed(2)}</b> ${state.tolerance < 0.98
+            ? "A is undersized, so the corner-sharing network increases its cooperative tilt."
+            : state.tolerance > 1.02
+              ? "A is oversized, pushing the structure toward hexagonal stacking or a non-perovskite phase."
+              : "The cage fit is close to ideal, so cubic geometry remains comfortable."}`
+        : `<b>[111]</b> crosses the complete supercell along its body diagonal. In BFO, both the polar displacement and the antiphase rotation axis are tied to this direction.`;
+    }
+
     const strength = document.querySelector("#strength");
     const tolerance = document.querySelector("#tolerance");
-    const strengthDown = document.querySelector("#strengthDown");
-    const strengthUp = document.querySelector("#strengthUp");
-    const toleranceDown = document.querySelector("#toleranceDown");
-    const toleranceUp = document.querySelector("#toleranceUp");
-    const strengthValue = document.querySelector("#strengthValue");
-    const tValue = document.querySelector("#tValue");
-    const toggleOcta = document.querySelector("#toggleOcta");
-    const toggleLabels = document.querySelector("#toggleLabels");
-    const readingTitle = document.querySelector("#readingTitle");
-    const readingBody = document.querySelector("#readingBody");
-    const callout = document.querySelector("#callout");
-    const spaceGroup = document.querySelector("#spaceGroup");
-    const angle = document.querySelector("#angle");
-    const polarity = document.querySelector("#polarity");
-    const axisLabel = document.querySelector("#axisLabel");
-
-    modeButtons.forEach((button) => {
+    document.querySelectorAll(".mode-button").forEach((button) => {
       button.addEventListener("click", () => {
         state.mode = button.dataset.mode;
-        modeButtons.forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
+        document.querySelectorAll(".mode-button").forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
         if (state.mode === "tolerance") {
           state.strength = 1;
           strength.value = "1";
         }
+        updateScene();
+      });
+    });
+    document.querySelectorAll(".view-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.view = button.dataset.view;
+        document.querySelectorAll(".view-button").forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
+        buildModel();
         updateScene();
       });
     });
@@ -895,188 +1187,51 @@
       state.strength = Number(strength.value);
       updateScene();
     }
-
     function syncTolerance() {
       state.tolerance = Number(tolerance.value);
       updateScene();
     }
-
-    ["input", "change", "click"].forEach((eventName) => {
-      strength.addEventListener(eventName, syncStrength);
-      tolerance.addEventListener(eventName, syncTolerance);
-    });
+    strength.addEventListener("input", syncStrength);
+    tolerance.addEventListener("input", syncTolerance);
 
     function stepControl(input, delta, sync) {
-      const next = THREE.MathUtils.clamp(
-        Number(input.value) + delta,
-        Number(input.min),
-        Number(input.max)
-      );
-      input.value = String(Number(next.toFixed(2)));
+      input.value = String(Number(THREE.MathUtils.clamp(Number(input.value) + delta, Number(input.min), Number(input.max)).toFixed(2)));
       sync();
     }
-
-    strengthDown.addEventListener("click", () => stepControl(strength, -0.05, syncStrength));
-    strengthUp.addEventListener("click", () => stepControl(strength, 0.05, syncStrength));
-    toleranceDown.addEventListener("click", () => stepControl(tolerance, -0.01, syncTolerance));
-    toleranceUp.addEventListener("click", () => stepControl(tolerance, 0.01, syncTolerance));
-
-    toggleOcta.addEventListener("click", () => {
+    document.querySelector("#strengthDown").addEventListener("click", () => stepControl(strength, -0.05, syncStrength));
+    document.querySelector("#strengthUp").addEventListener("click", () => stepControl(strength, 0.05, syncStrength));
+    document.querySelector("#toleranceDown").addEventListener("click", () => stepControl(tolerance, -0.01, syncTolerance));
+    document.querySelector("#toleranceUp").addEventListener("click", () => stepControl(tolerance, 0.01, syncTolerance));
+    document.querySelector("#toggleOcta").addEventListener("click", (event) => {
       state.showOcta = !state.showOcta;
-      toggleOcta.dataset.on = String(state.showOcta);
+      event.currentTarget.dataset.on = String(state.showOcta);
       updateScene();
     });
-
-    toggleLabels.addEventListener("click", () => {
+    document.querySelector("#toggleLabels").addEventListener("click", (event) => {
       state.showLabels = !state.showLabels;
-      toggleLabels.dataset.on = String(state.showLabels);
+      event.currentTarget.dataset.on = String(state.showLabels);
       updateScene();
     });
-
-    function transformedOxygens(mode, s, t) {
-      const tiltFromTolerance = THREE.MathUtils.clamp((1 - t) * 150, 0, 17);
-      const tiltDeg =
-        mode === "tilt" ? 14 * s :
-        mode === "bfo" ? 11 * s :
-        mode === "tolerance" ? tiltFromTolerance :
-        0;
-      const q = new THREE.Quaternion().setFromAxisAngle(diag, THREE.MathUtils.degToRad(tiltDeg));
-      return oxygenBase.map((p) => p.clone().applyQuaternion(q));
-    }
-
-    function shearPoint(p, mode, s, t) {
-      const factor =
-        mode === "bfo" ? 0.12 * s :
-        mode === "tolerance" ? THREE.MathUtils.clamp((1 - t) * 1.15, 0, 0.15) :
-        0;
-      return new THREE.Vector3(
-        p.x + factor * (p.y + p.z) * 0.5,
-        p.y + factor * (p.x + p.z) * 0.5,
-        p.z + factor * (p.x + p.y) * 0.5
-      );
-    }
-
-    function updateScene() {
-      const active = copy[state.mode];
-      const s = state.strength;
-      const t = state.tolerance;
-      const oxy = transformedOxygens(state.mode, s, t).map((p) => shearPoint(p, state.mode, s, t));
-      const shiftedCorners = corners.map((p) => shearPoint(p, state.mode, s, t));
-      const biShift = state.mode === "bfo" ? diag.clone().multiplyScalar(0.17 * s) : new THREE.Vector3();
-      const feShift =
-        state.mode === "bshift" ? diag.clone().multiplyScalar(0.38 * s) :
-        state.mode === "bfo" ? diag.clone().multiplyScalar(0.12 * s) :
-        new THREE.Vector3();
-
-      biAtoms.forEach((mesh, i) => {
-        mesh.position.copy(shiftedCorners[i]).add(biShift);
-        const scale = state.mode === "tolerance" ? THREE.MathUtils.mapLinear(t, 0.88, 1.08, 0.14, 0.25) : 0.19;
-        mesh.scale.setScalar(scale);
-      });
-
-      oxygenAtoms.forEach((mesh, i) => {
-        mesh.position.copy(oxy[i]);
-      });
-      feAtom.position.copy(feShift);
-
-      cubeLines.forEach((line, i) => {
-        const [a, b] = cubeEdges[i];
-        line.geometry.dispose();
-        line.geometry = new THREE.BufferGeometry().setFromPoints([shiftedCorners[a], shiftedCorners[b]]);
-      });
-
-      oxy.forEach((p, i) => positionBond(bonds[i], feAtom.position, p));
-      updateOctahedron(oxy);
-      updateLabels();
-
-      const octaVisible = state.showOcta && state.mode !== "tolerance";
-      octaGroup.visible = octaVisible;
-      labelGroup.visible = state.showLabels;
-      toleranceGroup.visible = state.mode === "tolerance";
-      arrowGroup.visible = state.mode !== "ideal";
-      displacementArrow.visible = state.mode === "bshift" || state.mode === "bfo";
-      polarArrow.setColor(new THREE.Color(state.mode === "tilt" ? 0x888277 : 0x274060));
-
-      if (state.mode === "tolerance") {
-        const good = Math.abs(t - 1) < 0.035;
-        toleranceRing.material = good ? materials.toleranceGood : materials.toleranceBad;
-        const scale = THREE.MathUtils.mapLinear(t, 0.88, 1.08, 0.82, 1.12);
-        toleranceRing.scale.set(scale, scale, scale);
-      }
-
-      strengthValue.textContent = `${s.toFixed(1)}x`;
-      tValue.textContent = t.toFixed(2);
-      readingTitle.textContent = active.title;
-      readingBody.textContent = active.body;
-      callout.innerHTML = `<strong>${active.calloutTitle}</strong>${active.callout}`;
-      spaceGroup.textContent = active.group;
-      angle.textContent = state.mode === "tolerance" ? `${(90 - THREE.MathUtils.clamp((1 - t) * 22, 0, 5)).toFixed(1)} deg` : active.angle;
-      polarity.textContent = active.polarity;
-
-      axisLabel.innerHTML =
-        state.mode === "tolerance"
-          ? `<b>t = ${t.toFixed(2)}</b> ${
-              t < 0.98
-                ? "A is undersized, so the model increases octahedral tilt to make the cage fit."
-                : t > 1.02
-                  ? "A is oversized, pushing the structure away from simple cubic perovskite packing."
-                  : "The cage fit is close to ideal, so cubic geometry stays comfortable."
-            }`
-          : `<b>[111]</b> is the body diagonal from one cube corner through the centre to the opposite corner. BFO's polar displacement and octahedral rotation are both tied to this direction.`;
-    }
-
-    function positionBond(mesh, start, end) {
-      const midpoint = start.clone().add(end).multiplyScalar(0.5);
-      const direction = end.clone().sub(start);
-      const length = direction.length();
-      mesh.position.copy(midpoint);
-      mesh.scale.set(1, length, 1);
-      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
-    }
-
-    function updateOctahedron(oxy) {
-      const vertices = [];
-      oxygenPairs.forEach(([a, b, c]) => {
-        vertices.push(...oxy[a].toArray(), ...oxy[b].toArray(), ...oxy[c].toArray());
-      });
-      octaGeometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-      octaGeometry.computeVertexNormals();
-
-      const edgePairs = [
-        [0, 2], [0, 3], [0, 4], [0, 5],
-        [1, 2], [1, 3], [1, 4], [1, 5],
-        [2, 4], [4, 3], [3, 5], [5, 2]
-      ];
-      edgePairs.forEach(([a, b], i) => {
-        octaEdgeLines[i].geometry.dispose();
-        octaEdgeLines[i].geometry = new THREE.BufferGeometry().setFromPoints([oxy[a], oxy[b]]);
-      });
-    }
-
-    function updateLabels() {
-      if (!labelSprites.length) return;
-      labelSprites[0].position.copy(biAtoms[7].position).multiplyScalar(1.15);
-      labelSprites[1].position.copy(biAtoms[0].position).multiplyScalar(1.15);
-      labelSprites[2].position.copy(feAtom.position).add(new THREE.Vector3(0.35, 0.34, 0.16));
-      labelSprites[3].position.copy(oxygenAtoms[3].position).add(new THREE.Vector3(0, -0.32, 0));
-    }
 
     function resize() {
       const rect = canvas.parentElement.getBoundingClientRect();
       renderer.setSize(rect.width, rect.height, false);
       camera.aspect = rect.width / Math.max(1, rect.height);
       camera.updateProjectionMatrix();
+      const labelWidth = rect.width < 560 ? 0.16 : 0.22;
+      labelGroup.children.forEach((label) => label.scale.set(labelWidth, labelWidth * 0.186, 1));
     }
 
     function animate() {
       requestAnimationFrame(animate);
-      root.rotation.y += 0.0007;
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) root.rotation.y += 0.00045;
       controls.update();
       renderer.render(scene, camera);
     }
 
     window.addEventListener("resize", resize);
     resize();
+    buildModel();
     updateScene();
     window.__perovskiteVisualizerReady = true;
     animate();
