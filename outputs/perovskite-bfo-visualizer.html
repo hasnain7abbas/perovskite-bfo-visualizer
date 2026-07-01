@@ -185,6 +185,65 @@
       background: var(--paper-2);
     }
 
+    .view-switch.cell-settings {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .view-button strong,
+    .view-button span {
+      display: block;
+    }
+
+    .view-button span {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .view-button[aria-pressed="true"] span {
+      color: var(--fe);
+    }
+
+    .sublattice-switches {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .focus-switch {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--paper-2);
+    }
+
+    .focus-button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .focus-button[aria-pressed="true"] {
+      background: #fffaf0;
+      color: var(--ink);
+      box-shadow: 0 1px 5px rgba(42, 35, 22, 0.14);
+    }
+
+    .focus-button:focus-visible {
+      outline: 3px solid rgba(45, 156, 139, 0.35);
+      outline-offset: 2px;
+    }
+
     .view-button {
       min-height: 38px;
       border: 0;
@@ -581,6 +640,14 @@
       .resize-note {
         display: none;
       }
+
+      .stage.coordination-active .callout {
+        display: none;
+      }
+
+      .stage.coordination-active .metric:nth-child(5) {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -638,12 +705,38 @@
       <section class="controls" aria-label="Visualization controls">
         <div class="control">
           <div class="control-row">
-            <strong>Crystal extent</strong>
-            <span>compare periodicity</span>
+            <strong>Cell representation</strong>
+            <span id="cellAtomSummary">8-cell network</span>
           </div>
-          <div class="view-switch" role="group" aria-label="Crystal extent">
-            <button class="view-button" data-view="supercell" aria-pressed="true">2 x 2 x 2 (8 cells)</button>
-            <button class="view-button" data-view="single" aria-pressed="false">1 cell</button>
+          <div class="view-switch cell-settings" role="group" aria-label="Cell representation">
+            <button class="view-button" data-view="network" aria-pressed="true"><strong>Network</strong><span>2 x 2 x 2</span></button>
+            <button class="view-button" data-view="pseudo" aria-pressed="false"><strong>Pseudocubic</strong><span>5 atoms</span></button>
+            <button class="view-button" data-view="rhom" aria-pressed="false"><strong>Rhombohedral</strong><span>10 atoms</span></button>
+            <button class="view-button" data-view="hex" aria-pressed="false"><strong>Hexagonal</strong><span>30 atoms</span></button>
+          </div>
+        </div>
+
+        <div class="control">
+          <div class="control-row">
+            <strong>Sublattices</strong>
+            <span>isolate A, B, or oxygen</span>
+          </div>
+          <div class="sublattice-switches" role="group" aria-label="Sublattice visibility">
+            <button class="small-button" id="toggleBi" data-on="true">Bi / A</button>
+            <button class="small-button" id="toggleFe" data-on="true">Fe / B</button>
+            <button class="small-button" id="toggleO" data-on="true">O</button>
+          </div>
+        </div>
+
+        <div class="control">
+          <div class="control-row">
+            <strong>Coordination focus</strong>
+            <span id="coordinationSummary">complete structure</span>
+          </div>
+          <div class="focus-switch" role="group" aria-label="Coordination focus">
+            <button class="focus-button" data-focus="all" aria-pressed="true">All atoms</button>
+            <button class="focus-button" data-focus="bi12" aria-pressed="false">BiO12<br />12 O</button>
+            <button class="focus-button" data-focus="fe6" aria-pressed="false">FeO6<br />octahedron</button>
           </div>
         </div>
         <div class="control">
@@ -683,6 +776,8 @@
           <div class="fact"><span>B-site cage</span><strong>6 O neighbours</strong></div>
           <div class="fact"><span>Hexagonal cell</span><strong>5.578 x 13.868 A</strong></div>
           <div class="fact"><span>Bi displacement</span><strong>about 0.6 A</strong></div>
+          <div class="fact"><span>A-site dopants</span><strong>La, Gd, Sm, Sr</strong></div>
+          <div class="fact"><span>B-site dopants</span><strong>Mn, Co, Cr</strong></div>
         </div>
         <ul class="notice-list" id="noticeList">
           <li><b>1</b><span>Each oxygen vertex is shared by neighbouring FeO6 octahedra.</span></li>
@@ -712,7 +807,7 @@
       <div class="hud">
         <div class="metric-strip">
           <div class="metric"><span>Space group</span><strong id="spaceGroup">Pm3m</strong></div>
-          <div class="metric cell-count"><span>Visible cells</span><strong id="cellCount">8 / 2 x 2 x 2</strong></div>
+          <div class="metric cell-count"><span>Cell content</span><strong id="cellCount">8-cell network</strong></div>
           <div class="metric"><span>a_pc</span><strong id="apc">3.965 A</strong></div>
           <div class="metric"><span>Angle</span><strong id="angle">90.0 deg</strong></div>
           <div class="metric"><span>Polarity</span><strong id="polarity">centrosym.</strong></div>
@@ -774,7 +869,8 @@
     const arrowGroup = new THREE.Group();
     const toleranceGroup = new THREE.Group();
     const labelGroup = new THREE.Group();
-    root.add(cageGroup, octaGroup, bondGroup, toleranceGroup, atomGroup, arrowGroup, labelGroup);
+    const focusGroup = new THREE.Group();
+    root.add(cageGroup, octaGroup, bondGroup, toleranceGroup, atomGroup, arrowGroup, labelGroup, focusGroup);
     scene.add(root);
 
     const materials = {
@@ -788,6 +884,8 @@
       octaMinus: new THREE.MeshStandardMaterial({ color: 0x2d9c8b, transparent: true, opacity: 0.25, roughness: 0.62, side: THREE.DoubleSide }),
       octaLinePlus: new THREE.LineBasicMaterial({ color: 0x9d7220, transparent: true, opacity: 0.68 }),
       octaLineMinus: new THREE.LineBasicMaterial({ color: 0x247c70, transparent: true, opacity: 0.66 }),
+      coordination: new THREE.LineBasicMaterial({ color: 0x274060, transparent: true, opacity: 0.72 }),
+      biCage: new THREE.LineBasicMaterial({ color: 0x2d9c8b, transparent: true, opacity: 0.72 }),
       toleranceGood: new THREE.MeshStandardMaterial({ color: 0x2d9c8b, transparent: true, opacity: 0.12 }),
       toleranceBad: new THREE.MeshStandardMaterial({ color: 0xb44834, transparent: true, opacity: 0.13 })
     };
@@ -822,16 +920,21 @@
 
     const state = {
       mode: "ideal",
-      view: "supercell",
+      view: "network",
       strength: 1,
       tolerance: 0.96,
       showOcta: true,
-      showLabels: true
+      showLabels: true,
+      showBi: true,
+      showFe: true,
+      showO: true,
+      focus: "all"
     };
     let model = null;
     let polarArrow = null;
     let displacementArrow = null;
     let toleranceCage = null;
+    let appliedFocus = "all";
 
     const copy = {
       ideal: {
@@ -885,6 +988,7 @@
       mesh.scale.setScalar(radius);
       mesh.position.copy(base);
       mesh.userData.base = base.clone();
+      mesh.userData.kind = kind;
       atomGroup.add(mesh);
       return mesh;
     }
@@ -947,9 +1051,9 @@
       context.closePath();
     }
 
-    function buildModel() {
-      [cageGroup, octaGroup, bondGroup, atomGroup, arrowGroup, toleranceGroup, labelGroup].forEach(clearGroup);
-      const n = state.view === "supercell" ? 2 : 1;
+    function buildNetworkModel() {
+      [cageGroup, octaGroup, bondGroup, atomGroup, arrowGroup, toleranceGroup, labelGroup, focusGroup].forEach(clearGroup);
+      const n = 2;
       const extent = n * cellSize / 2;
       const cells = [];
       const oxygens = new Map();
@@ -1026,8 +1130,27 @@
       makeLabel("Fe / B: 6-coordinate", labelFe.mesh, new THREE.Vector3(-0.36, -0.34, 0.08));
       makeLabel("shared oxygen vertex", labelO.mesh, new THREE.Vector3(0.42, -0.42, 0));
 
-      model = { n, extent, cells, oxygens, aAtoms, cageLines, labelA, labelFe, labelO };
+      const atomRecords = [
+        ...aAtoms.map((atom) => ({ kind: "bi", mesh: atom.mesh, base: atom.base })),
+        ...cells.map((cell) => ({ kind: "fe", mesh: cell.fe.mesh, base: cell.center })),
+        ...Array.from(oxygens.values()).map((oxygen) => ({ kind: "o", mesh: oxygen.mesh, base: oxygen.base }))
+      ];
+      model = {
+        kind: "network",
+        n,
+        extent,
+        cells,
+        oxygens,
+        aAtoms,
+        cageLines,
+        labelA,
+        labelFe,
+        labelO,
+        atomRecords,
+        cellVectors: [new THREE.Vector3(n * cellSize, 0, 0), new THREE.Vector3(0, n * cellSize, 0), new THREE.Vector3(0, 0, n * cellSize)]
+      };
       window.__perovskiteModelStats = {
+        representation: "network",
         cells: cells.length,
         aSites: aAtoms.length,
         bSites: cells.length,
@@ -1035,9 +1158,180 @@
         octahedra: cells.length
       };
       camera.position.set(extent * 2.35, extent * 1.9, extent * 2.65);
-      controls.minDistance = n === 2 ? 4.5 : 3;
-      controls.maxDistance = n === 2 ? 15 : 10;
+      controls.minDistance = 4.5;
+      controls.maxDistance = 15;
       controls.update();
+      model.defaultCamera = camera.position.clone();
+      model.defaultMinDistance = controls.minDistance;
+      model.defaultMaxDistance = controls.maxDistance;
+    }
+
+    const representationCopy = {
+      pseudo: {
+        title: "Pseudocubic BFO reference",
+        body: "This 5-atom ABO3 basis contains 1 Bi, 1 Fe, and 3 O. It is the clearest way to name the perovskite sites and pseudocubic directions, but it is too small to reproduce the doubled antiphase R3c tilt pattern by itself.",
+        calloutTitle: "Five atoms describe one formula unit.",
+        callout: "Use this basis for a_pc and [111] indexing. Use the 10-atom rhombohedral cell when the full R3c distortion must be represented.",
+        group: "pseudo-Pm3m", count: "5 = 1 Bi + 1 Fe + 3 O", angle: "90.0 deg", polarity: "[111] reference",
+        notices: ["The displayed atoms are the unique periodic basis, not every boundary image.", "One formula unit gives the familiar ABO3 count of five atoms.", "Antiphase octahedral rotation doubles the minimum structural periodicity."]
+      },
+      rhom: {
+        title: "Primitive rhombohedral R3c cell",
+        body: "The primitive R3c cell contains 2 BiFeO3 formula units: 2 Bi, 2 Fe, and 6 O, for 10 atoms total. Its two FeO6 octahedra carry the opposite rotation senses required by the a^-a^-a^- pattern.",
+        calloutTitle: "Ten atoms contain the complete R3c motif.",
+        callout: "This is the smallest true crystallographic cell for bulk rhombohedral BFO, including both antiphase octahedra and the polar displacement.",
+        group: "R3c primitive", count: "10 = 2 Bi + 2 Fe + 6 O", angle: "alpha = 59.4 deg", polarity: "trigonal axis",
+        notices: ["The primitive cell has two formula units.", "Two Fe sites allow opposite octahedral rotation senses.", "The rhombohedral polar axis corresponds to pseudocubic [111]."]
+      },
+      hex: {
+        title: "Conventional hexagonal R3c setting",
+        body: "The equivalent hexagonal setting contains 6 formula units: 6 Bi, 6 Fe, and 18 O, for 30 atoms. It is three times the volume of the primitive rhombohedral cell and uses a_hex, b_hex, and c_hex axes.",
+        calloutTitle: "Thirty atoms, same R3c crystal.",
+        callout: "This is a change of crystallographic setting, not a different hexagonal BFO phase. The long c_hex axis is parallel to the polar trigonal direction.",
+        group: "R3c hex setting", count: "30 = 6 Bi + 6 Fe + 18 O", angle: "gamma = 120 deg", polarity: "c_hex",
+        notices: ["a_hex is 5.5788 A and c_hex is 13.8693 A at room temperature.", "The conventional hexagonal cell contains three primitive rhombohedral cells.", "A dopant still substitutes on the same Bi/A or Fe/B sublattice in either setting."]
+      }
+    };
+
+    function wrapFraction(value) {
+      const wrapped = value - Math.floor(value);
+      return Math.abs(wrapped - 1) < 1e-7 ? 0 : wrapped;
+    }
+
+    function fractionalToCartesian(fractional, vectors) {
+      return vectors[0].clone().multiplyScalar(fractional.x)
+        .add(vectors[1].clone().multiplyScalar(fractional.y))
+        .add(vectors[2].clone().multiplyScalar(fractional.z));
+    }
+
+    function uniqueFractional(records) {
+      const unique = new Map();
+      records.forEach((record) => {
+        const fractional = new THREE.Vector3(wrapFraction(record.f.x), wrapFraction(record.f.y), wrapFraction(record.f.z));
+        const key = `${record.kind}:${fractional.x.toFixed(5)}:${fractional.y.toFixed(5)}:${fractional.z.toFixed(5)}`;
+        if (!unique.has(key)) unique.set(key, { kind: record.kind, f: fractional });
+      });
+      return Array.from(unique.values());
+    }
+
+    function hexagonalR3cStructure() {
+      const a = 3.0;
+      const c = a * (13.86932 / 5.57882);
+      const vectors = [
+        new THREE.Vector3(a, 0, 0),
+        new THREE.Vector3(-a / 2, Math.sqrt(3) * a / 2, 0),
+        new THREE.Vector3(0, 0, c)
+      ];
+      const centering = [[0, 0, 0], [2 / 3, 1 / 3, 1 / 3], [1 / 3, 2 / 3, 2 / 3]];
+      const sites = [
+        { kind: "bi", x: 0, y: 0, z: 0 },
+        { kind: "fe", x: 0, y: 0, z: 0.22021 },
+        { kind: "o", x: 0.44694, y: 0.01814, z: 0.95183 }
+      ];
+      const records = [];
+      sites.forEach((site) => {
+        const operations = [
+          [site.x, site.y, site.z],
+          [-site.y, site.x - site.y, site.z],
+          [-site.x + site.y, -site.x, site.z],
+          [site.y, site.x, site.z + 0.5],
+          [site.x - site.y, -site.y, site.z + 0.5],
+          [-site.x, -site.x + site.y, site.z + 0.5]
+        ];
+        centering.forEach(([tx, ty, tz]) => operations.forEach(([x, y, z]) => {
+          records.push({ kind: site.kind, f: new THREE.Vector3(x + tx, y + ty, z + tz) });
+        }));
+      });
+      return { vectors, records: uniqueFractional(records) };
+    }
+
+    function rhombohedralR3cStructure() {
+      const hexagonal = hexagonalR3cStructure();
+      const [a1, a2, c] = hexagonal.vectors;
+      const vectors = [
+        a1.clone().multiplyScalar(2 / 3).add(a2.clone().multiplyScalar(1 / 3)).add(c.clone().multiplyScalar(1 / 3)),
+        a1.clone().multiplyScalar(-1 / 3).add(a2.clone().multiplyScalar(1 / 3)).add(c.clone().multiplyScalar(1 / 3)),
+        a1.clone().multiplyScalar(-1 / 3).add(a2.clone().multiplyScalar(-2 / 3)).add(c.clone().multiplyScalar(1 / 3))
+      ];
+      const inverse = new THREE.Matrix3().set(
+        vectors[0].x, vectors[1].x, vectors[2].x,
+        vectors[0].y, vectors[1].y, vectors[2].y,
+        vectors[0].z, vectors[1].z, vectors[2].z
+      ).invert();
+      const records = hexagonal.records.map((record) => ({
+        kind: record.kind,
+        f: fractionalToCartesian(record.f, hexagonal.vectors).applyMatrix3(inverse)
+      }));
+      return { vectors, records: uniqueFractional(records) };
+    }
+
+    function pseudocubicStructure() {
+      const a = 3.4;
+      return {
+        vectors: [new THREE.Vector3(a, 0, 0), new THREE.Vector3(0, a, 0), new THREE.Vector3(0, 0, a)],
+        records: [
+          { kind: "bi", f: new THREE.Vector3(0, 0, 0) },
+          { kind: "fe", f: new THREE.Vector3(0.5, 0.5, 0.5) },
+          { kind: "o", f: new THREE.Vector3(0.5, 0.5, 0) },
+          { kind: "o", f: new THREE.Vector3(0.5, 0, 0.5) },
+          { kind: "o", f: new THREE.Vector3(0, 0.5, 0.5) }
+        ]
+      };
+    }
+
+    function drawCell(vectors) {
+      const origin = vectors[0].clone().add(vectors[1]).add(vectors[2]).multiplyScalar(-0.5);
+      const corners = cornerOffsets.map(([x, y, z]) => origin.clone()
+        .add(vectors[0].clone().multiplyScalar((x + 1) / 2))
+        .add(vectors[1].clone().multiplyScalar((y + 1) / 2))
+        .add(vectors[2].clone().multiplyScalar((z + 1) / 2)));
+      cubeEdges.forEach(([a, b]) => makeLine(cageGroup, corners[a], corners[b], materials.cage));
+      return origin;
+    }
+
+    function buildStaticModel(kind) {
+      [cageGroup, octaGroup, bondGroup, atomGroup, arrowGroup, toleranceGroup, labelGroup, focusGroup].forEach(clearGroup);
+      const structure = kind === "pseudo" ? pseudocubicStructure() : kind === "rhom" ? rhombohedralR3cStructure() : hexagonalR3cStructure();
+      const origin = drawCell(structure.vectors);
+      const atomRecords = structure.records.map((record) => {
+        const base = fractionalToCartesian(record.f, structure.vectors).add(origin);
+        const radius = record.kind === "bi" ? 0.19 : record.kind === "fe" ? 0.17 : 0.115;
+        return { kind: record.kind, base, mesh: makeAtom(record.kind, radius, base), fractional: record.f };
+      });
+      const axis = kind === "pseudo"
+        ? structure.vectors[0].clone().add(structure.vectors[1]).add(structure.vectors[2]).normalize()
+        : structure.vectors[0].clone().add(structure.vectors[1]).add(structure.vectors[2]).normalize();
+      const radius = Math.max(...atomRecords.map((atom) => atom.base.length()), ...structure.vectors.map((vector) => vector.length() * 0.55));
+      polarArrow = new THREE.ArrowHelper(axis, axis.clone().multiplyScalar(-radius * 0.85), radius * 1.7, 0x274060, 0.25, 0.16);
+      arrowGroup.add(polarArrow);
+      const biAtom = atomRecords.filter((atom) => atom.kind === "bi").reduce((best, atom) => atom.base.x + atom.base.y + atom.base.z > best.base.x + best.base.y + best.base.z ? atom : best);
+      const feAtom = atomRecords.filter((atom) => atom.kind === "fe").reduce((best, atom) => atom.base.x + atom.base.y + atom.base.z < best.base.x + best.base.y + best.base.z ? atom : best);
+      const oAtom = atomRecords.filter((atom) => atom.kind === "o").reduce((best, atom) => atom.base.y < best.base.y ? atom : best);
+      makeLabel("Bi / A sublattice", biAtom.mesh, new THREE.Vector3(0.28, 0.34, 0));
+      makeLabel("Fe / B sublattice", feAtom.mesh, new THREE.Vector3(-0.3, -0.34, 0));
+      makeLabel("oxygen sublattice", oAtom.mesh, new THREE.Vector3(0.28, -0.32, 0));
+      model = { kind, static: true, atomRecords, cellVectors: structure.vectors, radius };
+      const counts = atomRecords.reduce((sum, atom) => ({ ...sum, [atom.kind]: (sum[atom.kind] || 0) + 1 }), {});
+      window.__perovskiteModelStats = {
+        representation: kind,
+        atoms: atomRecords.length,
+        aSites: counts.bi || 0,
+        bSites: counts.fe || 0,
+        oxygenSites: counts.o || 0
+      };
+      camera.position.set(radius * 1.8, radius * 1.35, radius * 2.0);
+      controls.minDistance = Math.max(3, radius * 1.05);
+      controls.maxDistance = radius * 5;
+      controls.update();
+      model.defaultCamera = camera.position.clone();
+      model.defaultMinDistance = controls.minDistance;
+      model.defaultMaxDistance = controls.maxDistance;
+    }
+
+    function buildModel() {
+      appliedFocus = "";
+      if (state.view === "network") buildNetworkModel();
+      else buildStaticModel(state.view);
     }
 
     function tiltDegrees() {
@@ -1083,7 +1377,192 @@
       });
     }
 
+    function sublatticeVisible(kind) {
+      return kind === "bi" ? state.showBi : kind === "fe" ? state.showFe : state.showO;
+    }
+
+    function makeFocusAtom(kind, radius, position) {
+      const mesh = new THREE.Mesh(kind === "o" ? smallSphere : sphere, materials[kind]);
+      mesh.scale.setScalar(radius);
+      mesh.position.copy(position);
+      focusGroup.add(mesh);
+      return mesh;
+    }
+
+    function makeFocusBond(start, end, radius = 0.018) {
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 1, 10), materials.bond);
+      focusGroup.add(mesh);
+      positionBond(mesh, start, end);
+      return mesh;
+    }
+
+    function periodicOxygenNeighbours(target, count) {
+      const candidates = new Map();
+      const oxygens = model.atomRecords.filter((atom) => atom.kind === "o");
+      for (let i = -1; i <= 1; i += 1) {
+        for (let j = -1; j <= 1; j += 1) {
+          for (let k = -1; k <= 1; k += 1) {
+            const translation = model.cellVectors[0].clone().multiplyScalar(i)
+              .add(model.cellVectors[1].clone().multiplyScalar(j))
+              .add(model.cellVectors[2].clone().multiplyScalar(k));
+            oxygens.forEach((oxygen) => {
+              const position = oxygen.mesh.position.clone().add(translation);
+              const distance = position.distanceTo(target);
+              if (distance < 0.08) return;
+              const key = pointKey(position);
+              if (!candidates.has(key) || distance < candidates.get(key).distance) candidates.set(key, { position, distance });
+            });
+          }
+        }
+      }
+      return Array.from(candidates.values()).sort((a, b) => a.distance - b.distance).slice(0, count).map((entry) => entry.position);
+    }
+
+    function drawFeOctahedron(points) {
+      const remaining = points.map((_, index) => index);
+      const pairs = [];
+      while (remaining.length) {
+        const first = remaining.shift();
+        let oppositeAt = 0;
+        let farthest = -Infinity;
+        remaining.forEach((candidate, index) => {
+          const distance = points[first].distanceToSquared(points[candidate]);
+          if (distance > farthest) {
+            farthest = distance;
+            oppositeAt = index;
+          }
+        });
+        pairs.push([first, remaining.splice(oppositeAt, 1)[0]]);
+      }
+      const vertices = [];
+      for (let a = 0; a < 2; a += 1) {
+        for (let b = 0; b < 2; b += 1) {
+          for (let c = 0; c < 2; c += 1) {
+            vertices.push(...points[pairs[0][a]].toArray(), ...points[pairs[1][b]].toArray(), ...points[pairs[2][c]].toArray());
+          }
+        }
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.computeVertexNormals();
+      focusGroup.add(new THREE.Mesh(geometry, materials.octaPlus));
+      const seen = new Set();
+      points.forEach((point, index) => points.forEach((other, otherIndex) => {
+        if (otherIndex <= index || pairs.some((pair) => pair.includes(index) && pair.includes(otherIndex))) return;
+        const key = `${index}:${otherIndex}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          makeLine(focusGroup, point, other, materials.octaLinePlus);
+        }
+      }));
+    }
+
+    function drawBiCage(points) {
+      const seen = new Set();
+      points.forEach((point, index) => {
+        const nearest = points.map((other, otherIndex) => ({ other, otherIndex, distance: point.distanceToSquared(other) }))
+          .filter((entry) => entry.otherIndex !== index)
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 4);
+        nearest.forEach(({ other, otherIndex }) => {
+          const key = [index, otherIndex].sort((a, b) => a - b).join(":");
+          if (!seen.has(key)) {
+            seen.add(key);
+            makeLine(focusGroup, point, other, materials.biCage);
+          }
+        });
+      });
+    }
+
+    function updateCoordinationFocus() {
+      clearGroup(focusGroup);
+      const focused = state.focus !== "all";
+      canvas.parentElement.classList.toggle("coordination-active", focused);
+      cageGroup.visible = !focused;
+      atomGroup.visible = !focused;
+      bondGroup.visible = !focused && state.showFe && state.showO && !model.static;
+      octaGroup.visible = !focused && state.showOcta && state.showFe && state.showO && !model.static;
+      toleranceGroup.visible = !focused && !model.static && state.mode === "tolerance";
+      arrowGroup.visible = !focused && (model.static || state.mode !== "ideal");
+      labelGroup.visible = !focused && state.showLabels;
+      if (!focused) {
+        model.atomRecords.forEach((atom) => { atom.mesh.visible = sublatticeVisible(atom.kind); });
+        document.querySelector("#coordinationSummary").textContent = "complete structure";
+        window.__coordinationStats = { focus: "all", neighbours: 0 };
+        window.__sublatticeState = { bi: state.showBi, fe: state.showFe, o: state.showO };
+        if (appliedFocus !== "all") {
+          camera.position.copy(model.defaultCamera);
+          controls.target.set(0, 0, 0);
+          controls.minDistance = model.defaultMinDistance;
+          controls.maxDistance = model.defaultMaxDistance;
+          controls.update();
+        }
+        appliedFocus = "all";
+        return;
+      }
+
+      const kind = state.focus === "bi12" ? "bi" : "fe";
+      const count = kind === "bi" ? 12 : 6;
+      const targetRecord = model.atomRecords.filter((atom) => atom.kind === kind)
+        .reduce((best, atom) => atom.mesh.position.lengthSq() < best.mesh.position.lengthSq() ? atom : best);
+      const target = targetRecord.mesh.position.clone();
+      const neighbours = periodicOxygenNeighbours(target, count);
+      makeFocusAtom(kind, kind === "bi" ? 0.23 : 0.21, target);
+      neighbours.forEach((position) => {
+        makeFocusAtom("o", 0.13, position);
+        makeFocusBond(target, position);
+      });
+      if (kind === "bi") drawBiCage(neighbours);
+      else drawFeOctahedron(neighbours);
+      if (appliedFocus !== state.focus) {
+        const shellRadius = Math.max(...neighbours.map((position) => position.distanceTo(target)));
+        camera.position.copy(target).add(new THREE.Vector3(shellRadius * 2.8, shellRadius * 1.8, shellRadius * 3.1));
+        controls.target.copy(target);
+        controls.minDistance = shellRadius * 2.1;
+        controls.maxDistance = shellRadius * 7;
+        controls.update();
+      }
+      appliedFocus = state.focus;
+      document.querySelector("#coordinationSummary").textContent = kind === "bi" ? "Bi + 12 nearest O" : "Fe + 6 nearest O";
+      document.querySelector("#callout").innerHTML = kind === "bi"
+        ? "<strong>BiO12 cuboctahedral cage.</strong>The central Bi/A-site cation is connected to its 12 nearest oxygen neighbours. A-site dopants replace this Bi sublattice."
+        : "<strong>FeO6 oxygen octahedron.</strong>Only the central Fe/B-site cation and its six nearest oxygen neighbours are shown. B-site dopants replace this Fe sublattice.";
+      document.querySelector("#axisLabel").innerHTML = kind === "bi"
+        ? "<b>12-coordinate Bi</b> occupies the larger A-site cage; the green wireframe connects the nearest oxygen shell."
+        : "<b>6-coordinate Fe</b> sits inside the oxygen octahedron; the shaded faces make the FeO6 geometry explicit.";
+      window.__coordinationStats = { focus: state.focus, neighbours: neighbours.length };
+      window.__sublatticeState = { bi: state.showBi, fe: state.showFe, o: state.showO };
+    }
+
+    function updateStaticScene() {
+      const active = representationCopy[state.view];
+      model.atomRecords.forEach((atom) => atom.mesh.position.copy(atom.base));
+      labelGroup.children.forEach((label) => label.position.copy(label.userData.target.position).add(label.userData.offset));
+      document.querySelector("#readingTitle").textContent = active.title;
+      document.querySelector("#readingBody").textContent = active.body;
+      document.querySelector("#callout").innerHTML = `<strong>${active.calloutTitle}</strong>${active.callout}`;
+      document.querySelector("#spaceGroup").textContent = active.group;
+      document.querySelector("#cellCount").textContent = active.count;
+      document.querySelector("#cellAtomSummary").textContent = active.count.split(" = ")[0] + " atoms";
+      const latticeMetric = document.querySelector("#apc");
+      latticeMetric.previousElementSibling.textContent = state.view === "hex" ? "a_h / c_h" : state.view === "rhom" ? "Formula units" : "a_pc";
+      latticeMetric.textContent = state.view === "hex" ? "5.579 / 13.869 A" : state.view === "rhom" ? "Z = 2" : "3.965 A";
+      document.querySelector("#angle").textContent = active.angle;
+      document.querySelector("#polarity").textContent = active.polarity;
+      document.querySelector("#noticeList").innerHTML = active.notices.map((notice, index) => `<li><b>${index + 1}</b><span>${notice}</span></li>`).join("");
+      document.querySelector("#axisLabel").innerHTML = state.view === "pseudo"
+        ? "<b>Pseudocubic [111]</b> is a convenient indexing direction. The 5-atom basis is a reference description, not the full R3c repeat."
+        : state.view === "rhom"
+          ? "<b>Primitive R3c</b> is the smallest cell that contains both opposite FeO6 rotation senses and two BiFeO3 formula units."
+          : "<b>Hexagonal setting</b> uses a_hex = b_hex, gamma = 120 deg, and the long c_hex polar axis; it is still rhombohedral R3c BFO.";
+      updateCoordinationFocus();
+    }
+
     function updateScene() {
+      if (model.static) {
+        updateStaticScene();
+        return;
+      }
       const active = copy[state.mode];
       const angleNow = THREE.MathUtils.degToRad(tiltDegrees());
       const alternating = angleNow > 0.0001;
@@ -1125,10 +1604,6 @@
       labelGroup.children.forEach((label) => label.position.copy(label.userData.target.position).add(label.userData.offset));
       const referenceFe = model.labelFe.mesh.position;
       displacementArrow.position.copy(referenceFe).add(diag.clone().multiplyScalar(-0.42));
-      octaGroup.visible = state.showOcta;
-      labelGroup.visible = state.showLabels;
-      toleranceGroup.visible = state.mode === "tolerance";
-      arrowGroup.visible = state.mode !== "ideal";
       displacementArrow.visible = state.mode === "bshift" || state.mode === "bfo";
       polarArrow.setColor(new THREE.Color(state.mode === "tilt" || state.mode === "tolerance" ? 0x888277 : 0x274060));
 
@@ -1146,7 +1621,11 @@
       document.querySelector("#readingBody").textContent = active.body;
       document.querySelector("#callout").innerHTML = `<strong>${active.calloutTitle}</strong>${active.callout}`;
       document.querySelector("#spaceGroup").textContent = active.group;
-      document.querySelector("#cellCount").textContent = model.n === 2 ? "8 / 2 x 2 x 2" : "1 / unit cell";
+      document.querySelector("#cellCount").textContent = "8 connected cells";
+      document.querySelector("#cellAtomSummary").textContent = "8-cell network";
+      const latticeMetric = document.querySelector("#apc");
+      latticeMetric.previousElementSibling.textContent = "a_pc";
+      latticeMetric.textContent = "3.965 A";
       document.querySelector("#angle").textContent = state.mode === "tolerance"
         ? `${(90 - THREE.MathUtils.clamp((1 - state.tolerance) * 22, 0, 5)).toFixed(1)} deg`
         : active.angle;
@@ -1159,6 +1638,7 @@
               ? "A is oversized, pushing the structure toward hexagonal stacking or a non-perovskite phase."
               : "The cage fit is close to ideal, so cubic geometry remains comfortable."}`
         : `<b>[111]</b> crosses the complete supercell along its body diagonal. In BFO, both the polar displacement and the antiphase rotation axis are tied to this direction.`;
+      updateCoordinationFocus();
     }
 
     const strength = document.querySelector("#strength");
@@ -1166,11 +1646,15 @@
     document.querySelectorAll(".mode-button").forEach((button) => {
       button.addEventListener("click", () => {
         state.mode = button.dataset.mode;
+        const needsNetwork = state.view !== "network";
+        state.view = "network";
         document.querySelectorAll(".mode-button").forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
+        document.querySelectorAll(".view-button").forEach((other) => other.setAttribute("aria-pressed", String(other.dataset.view === "network")));
         if (state.mode === "tolerance") {
           state.strength = 1;
           strength.value = "1";
         }
+        if (needsNetwork) buildModel();
         updateScene();
       });
     });
@@ -1179,6 +1663,30 @@
         state.view = button.dataset.view;
         document.querySelectorAll(".view-button").forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
         buildModel();
+        updateScene();
+      });
+    });
+    [["toggleBi", "showBi"], ["toggleFe", "showFe"], ["toggleO", "showO"]].forEach(([id, key]) => {
+      document.querySelector(`#${id}`).addEventListener("click", (event) => {
+        state[key] = !state[key];
+        event.currentTarget.dataset.on = String(state[key]);
+        updateScene();
+      });
+    });
+    document.querySelectorAll(".focus-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.focus = button.dataset.focus;
+        if (state.focus === "bi12") {
+          state.showBi = true;
+          state.showO = true;
+        } else if (state.focus === "fe6") {
+          state.showFe = true;
+          state.showO = true;
+        }
+        document.querySelectorAll(".focus-button").forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
+        [["toggleBi", "showBi"], ["toggleFe", "showFe"], ["toggleO", "showO"]].forEach(([id, key]) => {
+          document.querySelector(`#${id}`).dataset.on = String(state[key]);
+        });
         updateScene();
       });
     });
