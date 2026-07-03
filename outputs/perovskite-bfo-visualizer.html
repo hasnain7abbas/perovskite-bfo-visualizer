@@ -1230,13 +1230,14 @@
       ];
       const records = [];
       sites.forEach((site) => {
+        // General positions for R3c (#161) in hexagonal axes, before R-centering translations.
         const operations = [
           [site.x, site.y, site.z],
           [-site.y, site.x - site.y, site.z],
           [-site.x + site.y, -site.x, site.z],
-          [site.y, site.x, site.z + 0.5],
-          [site.x - site.y, -site.y, site.z + 0.5],
-          [-site.x, -site.x + site.y, site.z + 0.5]
+          [-site.y, -site.x, site.z + 0.5],
+          [-site.x + site.y, site.y, site.z + 0.5],
+          [site.x, site.x - site.y, site.z + 0.5]
         ];
         centering.forEach(([tx, ty, tz]) => operations.forEach(([x, y, z]) => {
           records.push({ kind: site.kind, f: new THREE.Vector3(x + tx, y + ty, z + tz) });
@@ -1507,6 +1508,11 @@
         .reduce((best, atom) => atom.mesh.position.lengthSq() < best.mesh.position.lengthSq() ? atom : best);
       const target = targetRecord.mesh.position.clone();
       const neighbours = periodicOxygenNeighbours(target, count);
+      const physicalScale = model.kind === "hex" || model.kind === "rhom"
+        ? 5.57882 / 3.0
+        : model.kind === "pseudo"
+          ? 3.965 / 3.4
+          : 1;
       makeFocusAtom(kind, kind === "bi" ? 0.23 : 0.21, target);
       neighbours.forEach((position) => {
         makeFocusAtom("o", 0.13, position);
@@ -1530,7 +1536,13 @@
       document.querySelector("#axisLabel").innerHTML = kind === "bi"
         ? "<b>12-coordinate Bi</b> occupies the larger A-site cage; the green wireframe connects the nearest oxygen shell."
         : "<b>6-coordinate Fe</b> sits inside the oxygen octahedron; the shaded faces make the FeO6 geometry explicit.";
-      window.__coordinationStats = { focus: state.focus, neighbours: neighbours.length };
+      const centroid = neighbours.reduce((sum, position) => sum.add(position), new THREE.Vector3()).multiplyScalar(1 / neighbours.length);
+      window.__coordinationStats = {
+        focus: state.focus,
+        neighbours: neighbours.length,
+        distances: neighbours.map((position) => position.distanceTo(target) * physicalScale).sort((a, b) => a - b),
+        centreOffset: centroid.distanceTo(target) * physicalScale
+      };
       window.__sublatticeState = { bi: state.showBi, fe: state.showFe, o: state.showO };
     }
 
